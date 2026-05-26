@@ -19,7 +19,7 @@ const monnifyWebhookEventSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-monnifyWebhookEventSchema.index({ processing_status: 1 });
+monnifyWebhookEventSchema.index({ processing_status: 1, wallet: 1, createdAt: -1 });
 monnifyWebhookEventSchema.index({ wallet: 1, createdAt: -1 });
 
 const MonnifyWebhookEvent = mongoose.model(

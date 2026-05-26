@@ -22,7 +22,7 @@ const accessDetailsSchema = new mongoose.Schema(
 
 const savedLocationSchema = new mongoose.Schema(
   {
-    location_id: { type: String, required: true, trim: true },
+    // location_id: { type: String, required: true, trim: true },
     label: { type: String, required: true, trim: true },
     street_address: { type: String, required: true, trim: true },
     city: { type: String, required: true, trim: true },
@@ -48,6 +48,7 @@ const profileSchema = new mongoose.Schema(
     },
     phone_number: { type: String, required: true, trim: true },
     created_at: { type: Date, default: Date.now },
+    avatar_url: { type: String, trim: true },
   },
   { _id: false },
 );
@@ -87,11 +88,11 @@ const authSchema = new mongoose.Schema(
 
 const userSchema = new mongoose.Schema(
   {
-    user_id: { type: String, required: true, unique: true, trim: true },
+    // user_id: { type: String, required: true, unique: true, trim: true },
     account_type: {
       type: String,
       enum: ["B2B_MERCHANT", "B2C_CUSTOMER", "ADMIN"],
-      required: true,
+      // required: true,
     },
     profile: { type: profileSchema, required: true },
     auth: { type: authSchema, required: true },

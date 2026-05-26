@@ -281,7 +281,7 @@ async function completeRegistration(subjectType, actor, req, res) {
     issueSession: false,
   });
   await sendVerificationCode(subjectType, actor, req);
-
+sendVerificationCode
   return res.status(201).json({
     message: `${subjectType.toLowerCase()} registered successfully. Verification code sent to email.`,
     data: {
