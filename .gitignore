@@ -4,3 +4,6 @@
 .env.local
 node_modules
 oloja-d895d-firebase-adminsdk-fbsvc-4d80efa665.json
+
+example.env
+example.json

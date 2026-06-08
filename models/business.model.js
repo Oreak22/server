@@ -207,16 +207,15 @@ businessSchema.path("business_hours.working_days").validate(function (days) {
   return dayNames.length === new Set(dayNames).size;
 }, "business_hours.working_days cannot contain duplicate days");
 
-businessSchema.pre("save", async function (next) {
-  if (!this.auth?.password || !this.isModified("auth.password")) return next();
+businessSchema.pre("save", async function () {
+  if (!this.auth?.password || !this.isModified("auth.password")) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.auth.password = await bcrypt.hash(this.auth.password, salt);
     this.auth.password_changed_at = new Date();
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 

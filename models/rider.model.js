@@ -44,7 +44,12 @@ const assignedAssetSchema = new mongoose.Schema(
       required: true,
     },
     license_plate: { type: String, required: true, unique: true, trim: true },
-    tracker_device_id: { type: String, required: true, unique: true, trim: true },
+    tracker_device_id: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
   },
   { _id: false },
 );
@@ -122,7 +127,10 @@ const riderSchema = new mongoose.Schema(
 
 riderSchema.index({ account_status: 1 });
 riderSchema.index({ "live_telemetry.current_status": 1 });
-riderSchema.index({ "live_telemetry.current_active_order_id": 1 }, { sparse: true });
+riderSchema.index(
+  { "live_telemetry.current_active_order_id": 1 },
+  { sparse: true },
+);
 riderSchema.index({ "daily_performance_counters.date": 1 });
 
 riderSchema.virtual("delivery_wallet", {
@@ -132,16 +140,15 @@ riderSchema.virtual("delivery_wallet", {
   justOne: true,
 });
 
-riderSchema.pre("save", async function (next) {
-  if (!this.auth?.password || !this.isModified("auth.password")) return next();
+riderSchema.pre("save", async function () {
+  if (!this.auth?.password || !this.isModified("auth.password")) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.auth.password = await bcrypt.hash(this.auth.password, salt);
     this.auth.password_changed_at = new Date();
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 

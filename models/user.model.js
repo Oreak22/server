@@ -128,15 +128,15 @@ userSchema.virtual("delivery_wallet", {
 });
 
 // If a B2B user supplies an existing business wallet_id, connect it automatically.
-userSchema.pre("validate", async function (next) {
+userSchema.pre("validate", async function () {
   try {
-    if (this.account_type !== "B2B_MERCHANT") return next();
+    if (this.account_type !== "B2B_MERCHANT") return;
 
     if (!this.profile?.business_name) {
-      return next(new Error("profile.business_name is required for B2B users"));
+      throw new Error("profile.business_name is required for B2B users");
     }
 
-    if (!this.b2b_config?.wallet_id || this.b2b_config.wallet) return next();
+    if (!this.b2b_config?.wallet_id || this.b2b_config.wallet) return;
 
     let Wallet;
     try {
@@ -150,30 +150,26 @@ userSchema.pre("validate", async function (next) {
     }).select("_id");
 
     if (!wallet) {
-      return next(
-        new Error(
-          `Wallet with wallet_id "${this.b2b_config.wallet_id}" was not found`,
-        ),
+      throw new Error(
+        `Wallet with wallet_id "${this.b2b_config.wallet_id}" was not found`,
       );
     }
 
     this.b2b_config.wallet = wallet._id;
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("auth.password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("auth.password")) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.auth.password = await bcrypt.hash(this.auth.password, salt);
     this.auth.password_changed_at = new Date();
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 

@@ -30,9 +30,9 @@ walletTransactionSchema.index({ wallet: 1, created_at: -1 });
 walletTransactionSchema.index({ wallet_id: 1, created_at: -1 });
 
 // Allows creating a transaction with only wallet_id from the API payload.
-walletTransactionSchema.pre("validate", async function (next) {
+walletTransactionSchema.pre("validate", async function () {
   try {
-    if (this.wallet) return next();
+    if (this.wallet) return;
 
     const Wallet = mongoose.model("Wallet");
     const wallet = await Wallet.findOne({ wallet_id: this.wallet_id }).select(
@@ -40,15 +40,14 @@ walletTransactionSchema.pre("validate", async function (next) {
     );
 
     if (!wallet) {
-      return next(
-        new Error(`Wallet with wallet_id "${this.wallet_id}" was not found`),
+      throw new Error(
+        `Wallet with wallet_id "${this.wallet_id}" was not found`,
       );
     }
 
     this.wallet = wallet._id;
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 

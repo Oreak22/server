@@ -21,9 +21,13 @@ function pickPrimaryMonnifyAccount(monnifyAccount) {
   return account;
 }
 
-async function createWalletFromMonnifyAccount({ ownerType, owner, monnifyAccount }) {
+async function createWalletFromMonnifyAccount({
+  ownerType,
+  owner,
+  monnifyAccount,
+}) {
   const account = pickPrimaryMonnifyAccount(monnifyAccount);
-  const publicIdField = `${ownerType.toLowerCase()}_id`;
+  const publicIdField = `id`;
 
   return Wallet.create({
     wallet_id: makeWalletId(),
@@ -50,7 +54,13 @@ async function createWalletFromMonnifyAccount({ ownerType, owner, monnifyAccount
   });
 }
 
-async function creditWallet({ wallet, amount, referenceCode, description, metadata }) {
+async function creditWallet({
+  wallet,
+  amount,
+  referenceCode,
+  description,
+  metadata,
+}) {
   const existingTransaction = await WalletTransaction.findOne({
     reference_code: referenceCode,
   });
@@ -101,7 +111,13 @@ async function creditWallet({ wallet, amount, referenceCode, description, metada
   return transaction.save();
 }
 
-async function debitDeliveryFee({ wallet_id, owner_type, owner_id, order_id, amount }) {
+async function debitDeliveryFee({
+  wallet_id,
+  owner_type,
+  owner_id,
+  order_id,
+  amount,
+}) {
   const query = {
     status: "ACTIVE",
     current_balance: { $gte: amount },

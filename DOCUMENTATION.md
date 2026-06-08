@@ -42,6 +42,38 @@ This document outlines all implemented authentication features, data models, and
 }
 ```
 
+
+<!-- 
+USER {
+  profile: {
+    first_name: 'Obe',
+    last_name: 'Rejoice',
+    email: 'rejoiceobe235@gmail.com',
+    phone_number: '07065694628',
+    created_at: 2026-06-01T11:33:30.001Z
+  },
+  saved_locations: [
+    {
+      label: 'Home',
+      street_address: 'Okeowode',
+      city: 'Ogbomoso',
+      state: 'Oyo',
+      coordinates: [Object],
+      plus_code: '',
+      access_details: [Object]
+    }
+  ],
+  account_status: 'ACTIVE',
+  _id: new ObjectId('6a1d6e09fdde35ca1de34b29'),
+  auth: {
+    password: 'zIeZ$qwDx8o06Go',
+    provider: 'PASSWORD',
+    email_verified: false
+  },
+  id: '6a1d6e09fdde35ca1de34b29'
+} undefined
+ -->
+
 **Registration Response (201):**
 
 ```json

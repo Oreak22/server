@@ -11,8 +11,13 @@ const {
   rotateRefreshToken,
   revokeRefreshToken,
 } = require("../services/token.service");
-const { reserveVirtualAccount } = require("../services/monnify.service");
-const { createWalletFromMonnifyAccount } = require("../services/wallet.service");
+const {
+  reserveVirtualAccount,
+  deallocateVirtualAccount,
+} = require("../services/monnify.service");
+const {
+  createWalletFromMonnifyAccount,
+} = require("../services/wallet.service");
 const {
   sendPasswordResetEmail,
   sendEmailVerificationCode,
@@ -25,7 +30,7 @@ const EMAIL_VERIFICATION_EXPIRES_MINUTES = 10;
 const actorConfig = {
   USER: {
     Model: User,
-    publicIdField: "user_id",
+    publicIdField: "id",
     emailPath: "profile.email",
     phonePath: "profile.phone_number",
     name(actor) {
@@ -40,7 +45,7 @@ const actorConfig = {
   },
   BUSINESS: {
     Model: Business,
-    publicIdField: "business_id",
+    publicIdField: "id",
     emailPath: "contact_email",
     phonePath: "phone_number",
     name(actor) {
@@ -55,7 +60,7 @@ const actorConfig = {
   },
   ADMIN: {
     Model: Admin,
-    publicIdField: "admin_id",
+    publicIdField: "id",
     emailPath: "profile.email",
     phonePath: "profile.phone_number",
     name(actor) {
@@ -70,7 +75,7 @@ const actorConfig = {
   },
   RIDER: {
     Model: Rider,
-    publicIdField: "rider_id",
+    publicIdField: "id",
     emailPath: "personal_info.email",
     phonePath: "personal_info.phone_number",
     name(actor) {
@@ -205,9 +210,21 @@ async function sendVerificationCode(subjectType, actor, req) {
   });
 }
 
-async function createWalletAndSession(subjectType, actor, req, res, options = {}) {
+async function createWalletAndSession(
+  subjectType,
+  actor,
+  req,
+  res,
+  options = {},
+) {
+  console.log("Creating wallet and session for", subjectType, actor);
   const issueSession = options.issueSession !== false;
-  const config = actorConfig[subjectType];
+  const config = await actorConfig[subjectType];
+
+  if (config === undefined) {
+    throw new Error(`Unsupported subject type: ${subjectType}`);
+  }
+
   const monnifyAccount = await reserveVirtualAccount({
     ownerType: subjectType,
     ownerId: actor[config.publicIdField],
@@ -239,57 +256,94 @@ async function createWalletAndSession(subjectType, actor, req, res, options = {}
 }
 
 async function completeRegistration(subjectType, actor, req, res) {
-  const config = actorConfig[subjectType];
-  const password = pickPassword(req.body);
+  try {
+    const config = actorConfig[subjectType];
+    const password = pickPassword(req.body);
 
-  if (!password) {
-    return res.status(400).json({ message: "Password is required" });
-  }
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
 
-  actor.auth = { ...(actor.auth || {}), password };
+    actor.auth = { ...(actor.auth || {}), password };
 
-  const validationError = actor.validateSync();
-  if (validationError) {
-    return res.status(400).json({ message: validationError.message });
-  }
+    const validationError = actor.validateSync();
+    if (validationError) {
+      return res.status(400).json({ message: validationError.message });
+    }
 
-  const customerEmail = config.email(actor);
-  if (!customerEmail) {
-    return res.status(400).json({
-      message: "A valid email is required to create a Monnify virtual account",
+    const customerEmail = config.email(actor);
+    if (!customerEmail) {
+      return res.status(400).json({
+        message:
+          "A valid email is required to create a Monnify virtual account",
+      });
+    }
+
+    const duplicateChecks = [
+      { [config.publicIdField]: actor[config.publicIdField] },
+      { [config.emailPath]: customerEmail },
+      { [config.phonePath]: getValueByPath(actor, config.phonePath) },
+    ].filter((condition) => Object.values(condition)[0]);
+
+    const existingActor = await config.Model.findOne({
+      $or: duplicateChecks,
+    }).select("_id");
+
+    if (existingActor) {
+      return res.status(409).json({
+        message: `${subjectType.toLowerCase()} already exists`,
+      });
+    }
+
+    // Reserve the Monnify NUBAN, save the actor, create wallet, then issue tokens.
+    // If anything fails after reservation, delete the reservation.
+    let walletResult;
+    try {
+      walletResult = await createWalletAndSession(
+        subjectType,
+        actor,
+        req,
+        res,
+        {
+          issueSession: false,
+        },
+      );
+    } catch (walletErr) {
+      // If wallet creation fails after Monnify reservation, delete the reservation
+      console.error(
+        "Wallet creation failed, cleaning up Monnify reservation:",
+        walletErr,
+      );
+      await deallocateVirtualAccount(subjectType, actor[config.publicIdField]);
+      throw walletErr;
+    }
+
+    const { wallet } = walletResult;
+
+    try {
+      await sendVerificationCode(subjectType, actor, req);
+    } catch (emailErr) {
+      // If email sending fails, delete the reservation and propagate error
+      console.error(
+        "Email verification failed, cleaning up Monnify reservation:",
+        emailErr,
+      );
+      await deallocateVirtualAccount(subjectType, actor[config.publicIdField]);
+      throw emailErr;
+    }
+
+    return res.status(201).json({
+      message: `${subjectType.toLowerCase()} registered successfully. Verification code sent to email.`,
+      data: {
+        actor: publicActor(actor),
+        wallet,
+        requires_email_verification: !actor.auth?.email_verified,
+      },
     });
+  } catch (err) {
+    console.error("Error in completeRegistration:", err);
+    throw err;
   }
-
-  const duplicateChecks = [
-    { [config.publicIdField]: actor[config.publicIdField] },
-    { [config.emailPath]: customerEmail },
-    { [config.phonePath]: getValueByPath(actor, config.phonePath) },
-  ].filter((condition) => Object.values(condition)[0]);
-
-  const existingActor = await config.Model.findOne({
-    $or: duplicateChecks,
-  }).select("_id");
-
-  if (existingActor) {
-    return res.status(409).json({
-      message: `${subjectType.toLowerCase()} already exists`,
-    });
-  }
-
-  // Reserve the Monnify NUBAN, save the actor, create wallet, then issue tokens.
-  const { wallet } = await createWalletAndSession(subjectType, actor, req, res, {
-    issueSession: false,
-  });
-  await sendVerificationCode(subjectType, actor, req);
-sendVerificationCode
-  return res.status(201).json({
-    message: `${subjectType.toLowerCase()} registered successfully. Verification code sent to email.`,
-    data: {
-      actor: publicActor(actor),
-      wallet,
-      requires_email_verification: !actor.auth?.email_verified,
-    },
-  });
 }
 
 function buildLoginQuery(subjectType, identifier) {
@@ -324,7 +378,9 @@ async function registerClientWithGoogle(req, res, next) {
         last_name: profile.last_name || lastNameParts.join(" ") || "Customer",
         email: decodedToken.email,
         phone_number:
-          profile.phone_number || req.body.phone_number || decodedToken.phone_number,
+          profile.phone_number ||
+          req.body.phone_number ||
+          decodedToken.phone_number,
       },
       auth: {
         provider: "GOOGLE",
@@ -352,9 +408,15 @@ async function registerClientWithGoogle(req, res, next) {
       return res.status(409).json({ message: "user already exists" });
     }
 
-    const { wallet, tokens } = await createWalletAndSession("USER", user, req, res, {
-      issueSession: user.auth.email_verified,
-    });
+    const { wallet, tokens } = await createWalletAndSession(
+      "USER",
+      user,
+      req,
+      res,
+      {
+        issueSession: user.auth.email_verified,
+      },
+    );
 
     if (!user.auth.email_verified) {
       await sendVerificationCode("USER", user, req);
@@ -406,16 +468,22 @@ async function registerRider(req, res, next) {
 async function loginActor(subjectType, req, res, next) {
   try {
     const config = actorConfig[subjectType];
-    const identifier = req.body.email || req.body.phone_number || req.body.identifier;
+    const identifier =
+      req.body.email || req.body.phone_number || req.body.identifier;
     const password = pickPassword(req.body);
 
     if (!identifier || !password) {
-      return res.status(400).json({ message: "Identifier and password are required" });
+      return res
+        .status(400)
+        .json({ message: "Identifier and password are required" });
     }
 
-    const actor = await config.Model.findOne(buildLoginQuery(subjectType, identifier))
+    const actor = await config.Model.findOne(
+      buildLoginQuery(subjectType, identifier),
+    )
       .select("+auth.password")
       .populate("delivery_wallet");
+    console.log(`Login successful for ${subjectType}:`, actor);
 
     if (!actor || !(await actor.comparePassword(password))) {
       return res.status(401).json({ message: "Invalid login credentials" });
@@ -442,7 +510,11 @@ async function loginActor(subjectType, req, res, next) {
     const tokens = await issueTokenPair(subjectType, actor, req);
 
     if (subjectType === "ADMIN") {
-      setAdminRefreshCookie(res, tokens.refresh.token, tokens.refresh.expires_at);
+      setAdminRefreshCookie(
+        res,
+        tokens.refresh.token,
+        tokens.refresh.expires_at,
+      );
     }
 
     return res.json({
@@ -451,17 +523,20 @@ async function loginActor(subjectType, req, res, next) {
         actor: publicActor(actor),
         access_token: tokens.access.token,
         access_token_expires_in: tokens.access.expires_in,
-        refresh_token: subjectType === "ADMIN" ? undefined : tokens.refresh.token,
+        refresh_token:
+          subjectType === "ADMIN" ? undefined : tokens.refresh.token,
         refresh_token_expires_at: tokens.refresh.expires_at,
       },
     });
   } catch (err) {
+    console.log(`Error in loginActor for ${subjectType}:`, err);
     next(err);
   }
 }
 
 const loginClient = (req, res, next) => loginActor("USER", req, res, next);
-const loginBusiness = (req, res, next) => loginActor("BUSINESS", req, res, next);
+const loginBusiness = (req, res, next) =>
+  loginActor("BUSINESS", req, res, next);
 const loginAdmin = (req, res, next) => loginActor("ADMIN", req, res, next);
 const loginRider = (req, res, next) => loginActor("RIDER", req, res, next);
 
@@ -476,7 +551,9 @@ async function loginClientWithGoogle(req, res, next) {
     }).populate("delivery_wallet");
 
     if (!user) {
-      return res.status(404).json({ message: "Google client account was not found" });
+      return res
+        .status(404)
+        .json({ message: "Google client account was not found" });
     }
 
     if (user.account_status !== "ACTIVE") {
@@ -532,14 +609,18 @@ async function verifyEmail(req, res, next) {
       });
     }
 
-    const email = String(req.body.email || "").toLowerCase().trim();
+    const email = String(req.body.email || "")
+      .toLowerCase()
+      .trim();
     const publicId = req.body.public_id || req.body[config.publicIdField];
     const lookup = publicId
       ? { [config.publicIdField]: publicId }
       : { [config.emailPath]: email };
 
     if (!publicId && !email) {
-      return res.status(400).json({ message: "Email or public_id is required" });
+      return res
+        .status(400)
+        .json({ message: "Email or public_id is required" });
     }
 
     const actor = await config.Model.findOne(lookup);
@@ -588,17 +669,23 @@ async function resendEmailVerification(req, res, next) {
     const config = actorConfig[subjectType];
 
     if (!config) {
-      return res.status(400).json({ message: "A valid subject_type is required" });
+      return res
+        .status(400)
+        .json({ message: "A valid subject_type is required" });
     }
 
-    const email = String(req.body.email || "").toLowerCase().trim();
+    const email = String(req.body.email || "")
+      .toLowerCase()
+      .trim();
     const publicId = req.body.public_id || req.body[config.publicIdField];
     const lookup = publicId
       ? { [config.publicIdField]: publicId }
       : { [config.emailPath]: email };
 
     if (!publicId && !email) {
-      return res.status(400).json({ message: "Email or public_id is required" });
+      return res
+        .status(400)
+        .json({ message: "Email or public_id is required" });
     }
 
     const actor = await config.Model.findOne(lookup);
@@ -622,11 +709,15 @@ async function resendEmailVerification(req, res, next) {
 async function requestPasswordReset(req, res, next) {
   try {
     const subjectType = String(req.body.subject_type || "USER").toUpperCase();
-    const email = String(req.body.email || "").toLowerCase().trim();
+    const email = String(req.body.email || "")
+      .toLowerCase()
+      .trim();
     const config = actorConfig[subjectType];
 
     if (!config || !email) {
-      return res.status(400).json({ message: "A valid subject_type and email are required" });
+      return res
+        .status(400)
+        .json({ message: "A valid subject_type and email are required" });
     }
 
     const actor = await config.Model.findOne({ [config.emailPath]: email });
@@ -640,7 +731,9 @@ async function requestPasswordReset(req, res, next) {
 
     const rawToken = crypto.randomBytes(32).toString("base64url");
     const tokenHash = PasswordResetToken.hashToken(rawToken);
-    const expiresAt = new Date(Date.now() + PASSWORD_RESET_EXPIRES_MINUTES * 60 * 1000);
+    const expiresAt = new Date(
+      Date.now() + PASSWORD_RESET_EXPIRES_MINUTES * 60 * 1000,
+    );
 
     await PasswordResetToken.create({
       subject_type: subjectType,
@@ -675,11 +768,15 @@ async function resetPassword(req, res, next) {
     const newPassword = pickPassword(req.body);
 
     if (!token || !newPassword) {
-      return res.status(400).json({ message: "Token and new password are required" });
+      return res
+        .status(400)
+        .json({ message: "Token and new password are required" });
     }
 
     if (String(newPassword).length < 8) {
-      return res.status(400).json({ message: "Password must be at least 8 characters" });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 8 characters" });
     }
 
     const tokenHash = PasswordResetToken.hashToken(token);
@@ -690,7 +787,9 @@ async function resetPassword(req, res, next) {
     }).populate("subject");
 
     if (!resetToken || !resetToken.subject) {
-      return res.status(400).json({ message: "Password reset link is invalid or expired" });
+      return res
+        .status(400)
+        .json({ message: "Password reset link is invalid or expired" });
     }
 
     const actor = resetToken.subject;
@@ -726,7 +825,8 @@ async function resetPassword(req, res, next) {
 
 async function refresh(req, res, next) {
   try {
-    const refreshToken = req.body.refresh_token || getCookie(req, "refresh_token");
+    const refreshToken =
+      req.body.refresh_token || getCookie(req, "refresh_token");
 
     if (!refreshToken) {
       return res.status(401).json({ message: "Refresh token is required" });
@@ -736,7 +836,11 @@ async function refresh(req, res, next) {
     const rotated = await rotateRefreshToken(refreshToken, req);
 
     if (rotated.subject_type === "ADMIN") {
-      setAdminRefreshCookie(res, rotated.refresh.token, rotated.refresh.expires_at);
+      setAdminRefreshCookie(
+        res,
+        rotated.refresh.token,
+        rotated.refresh.expires_at,
+      );
     }
 
     return res.json({
@@ -756,7 +860,8 @@ async function refresh(req, res, next) {
 
 async function logout(req, res, next) {
   try {
-    const refreshToken = req.body.refresh_token || getCookie(req, "refresh_token");
+    const refreshToken =
+      req.body.refresh_token || getCookie(req, "refresh_token");
 
     if (refreshToken) {
       await revokeRefreshToken(refreshToken, "LOGOUT");

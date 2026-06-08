@@ -16,7 +16,9 @@ function assertMonnifyConfig() {
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length) {
-    throw new Error(`Missing Monnify environment variables: ${missing.join(", ")}`);
+    throw new Error(
+      `Missing Monnify environment variables: ${missing.join(", ")}`,
+    );
   }
 }
 
@@ -54,7 +56,10 @@ async function getMonnifyAccessToken() {
 
 function buildAccountReference(ownerType, ownerId) {
   const prefix = process.env.MONNIFY_ACCOUNT_PREFIX || "oloja";
-  return `${prefix}_${ownerType.toLowerCase()}_${ownerId}`.replace(/[^a-zA-Z0-9_-]/g, "_");
+  return `${prefix}_${ownerType.toLowerCase()}_${ownerId}`.replace(
+    /[^a-zA-Z0-9_-]/g,
+    "_",
+  );
 }
 
 async function reserveVirtualAccount({
@@ -67,7 +72,7 @@ async function reserveVirtualAccount({
   nin,
 }) {
   assertMonnifyConfig();
-
+  console.log("Reserving Monnify virtual account for", ownerType, ownerId);
   const accessToken = await getMonnifyAccessToken();
   const requestBody = {
     accountReference: buildAccountReference(ownerType, ownerId),
@@ -96,10 +101,47 @@ async function reserveVirtualAccount({
   const payload = await response.json();
 
   if (!response.ok || !payload.requestSuccessful) {
-    throw new Error(payload.responseMessage || "Monnify reserved account failed");
+    throw new Error(
+      payload.responseMessage || "Monnify reserved account failed",
+    );
   }
 
   return payload.responseBody;
+}
+
+async function deallocateVirtualAccount(ownerType, ownerId) {
+  assertMonnifyConfig();
+  console.log("Deallocating Monnify virtual account for", ownerType, ownerId);
+
+  const accessToken = await getMonnifyAccessToken();
+  const accountReference = buildAccountReference(ownerType, ownerId);
+
+  try {
+    const response = await fetch(
+      `${getBaseUrl()}/api/v2/bank-transfer/reserved-accounts/${accountReference}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    const payload = await response.json();
+
+    if (!response.ok || !payload.requestSuccessful) {
+      console.error(
+        "Failed to deallocate Monnify account:",
+        payload.responseMessage,
+      );
+      return false;
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error deallocating Monnify account:", err);
+    return false;
+  }
 }
 
 function verifyWebhookSignature(rawBody, signature) {
@@ -113,11 +155,15 @@ function verifyWebhookSignature(rawBody, signature) {
   const received = Buffer.from(signature.toLowerCase());
   const expected = Buffer.from(computedSignature);
 
-  return received.length === expected.length && crypto.timingSafeEqual(received, expected);
+  return (
+    received.length === expected.length &&
+    crypto.timingSafeEqual(received, expected)
+  );
 }
 
 module.exports = {
   reserveVirtualAccount,
+  deallocateVirtualAccount,
   verifyWebhookSignature,
   buildAccountReference,
 };

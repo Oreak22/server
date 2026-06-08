@@ -217,7 +217,9 @@ adminSchema.path("access_scope.business_ids").validate(function (businessIds) {
   return businessIds.length === new Set(businessIds).size;
 }, "access_scope.business_ids cannot contain duplicate values");
 
-adminSchema.path("access_scope.service_categories").validate(function (categories) {
+adminSchema.path("access_scope.service_categories").validate(function (
+  categories,
+) {
   return categories.length === new Set(categories).size;
 }, "access_scope.service_categories cannot contain duplicate values");
 
@@ -233,16 +235,15 @@ adminSchema.path("work_shift.working_days").validate(function (workingDays) {
   return workingDays.length === new Set(workingDays).size;
 }, "work_shift.working_days cannot contain duplicate values");
 
-adminSchema.pre("save", async function (next) {
-  if (!this.isModified("auth.password")) return next();
+adminSchema.pre("save", async function () {
+  if (!this.isModified("auth.password")) return;
 
   try {
     const salt = await bcrypt.genSalt(10);
     this.auth.password = await bcrypt.hash(this.auth.password, salt);
     this.auth.password_changed_at = new Date();
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 

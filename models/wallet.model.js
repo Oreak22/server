@@ -80,7 +80,10 @@ const walletSchema = new mongoose.Schema(
 
 walletSchema.index({ owner_type: 1, owner_id: 1 }, { unique: true });
 walletSchema.index({ business_id: 1 }, { unique: true, sparse: true });
-walletSchema.index({ "monnify.account_reference": 1 }, { unique: true, sparse: true });
+walletSchema.index(
+  { "monnify.account_reference": 1 },
+  { unique: true, sparse: true },
+);
 
 // One wallet has many transactions.
 walletSchema.virtual("transactions", {
@@ -90,7 +93,7 @@ walletSchema.virtual("transactions", {
 });
 
 // Allows creating wallets from public IDs, e.g. owner_type=RIDER + owner_id=rdr_990123.
-walletSchema.pre("validate", async function (next) {
+walletSchema.pre("validate", async function () {
   try {
     if (!this.owner_type && this.business_id) {
       this.owner_type = "BUSINESS";
@@ -100,19 +103,19 @@ walletSchema.pre("validate", async function (next) {
     this.owner_model = ownerModelByType[this.owner_type];
 
     if (!this.owner_model) {
-      return next(new Error("A valid wallet owner_type is required"));
+      throw new Error("A valid wallet owner_type is required");
     }
 
     if (!this.owner && this.owner_id) {
       const OwnerModel = mongoose.model(this.owner_model);
       const publicIdField = `${this.owner_type.toLowerCase()}_id`;
-      const owner = await OwnerModel.findOne({ [publicIdField]: this.owner_id }).select(
-        "_id",
-      );
+      const owner = await OwnerModel.findOne({
+        [publicIdField]: this.owner_id,
+      }).select("_id");
 
       if (!owner) {
-        return next(
-          new Error(`${this.owner_type} with id "${this.owner_id}" was not found`),
+        throw new Error(
+          `${this.owner_type} with id "${this.owner_id}" was not found`,
         );
       }
 
@@ -123,10 +126,8 @@ walletSchema.pre("validate", async function (next) {
       this.business = this.owner;
       this.business_id = this.owner_id;
     }
-
-    next();
   } catch (err) {
-    next(err);
+    throw err;
   }
 });
 
