@@ -4,25 +4,25 @@ const RefreshToken = require("../models/refreshToken.model");
 const subjectConfig = {
   USER: {
     modelName: "User",
-    publicIdField: "user_id",
+    publicIdField: "id",
     accessTokenSeconds: 60 * 60,
     refreshTokenSeconds: 60 * 60 * 24 * 90,
   },
   RIDER: {
     modelName: "Rider",
-    publicIdField: "rider_id",
+    publicIdField: "id",
     accessTokenSeconds: 60 * 60,
     refreshTokenSeconds: 60 * 60 * 24 * 90,
   },
   BUSINESS: {
     modelName: "Business",
-    publicIdField: "business_id",
+    publicIdField: "id",
     accessTokenSeconds: 60 * 30,
     refreshTokenSeconds: 60 * 60 * 24 * 30,
   },
   ADMIN: {
     modelName: "Admin",
-    publicIdField: "admin_id",
+    publicIdField: "id",
     accessTokenSeconds: 60 * 20,
     refreshTokenSeconds: 60 * 60 * 24,
   },
@@ -40,7 +40,9 @@ function signToken(unsignedToken) {
   return crypto
     .createHmac(
       "sha256",
-      process.env.ACCESS_TOKEN_SECRET || process.env.JWT_SECRET || "dev-access-secret",
+      process.env.ACCESS_TOKEN_SECRET ||
+        process.env.JWT_SECRET ||
+        "dev-access-secret",
     )
     .update(unsignedToken)
     .digest("base64url");
@@ -82,7 +84,10 @@ function verifyAccessToken(token) {
   const received = Buffer.from(signature);
   const expected = Buffer.from(expectedSignature);
 
-  if (received.length !== expected.length || !crypto.timingSafeEqual(received, expected)) {
+  if (
+    received.length !== expected.length ||
+    !crypto.timingSafeEqual(received, expected)
+  ) {
     throw new Error("Invalid access token signature");
   }
 
@@ -126,6 +131,7 @@ async function createRefreshToken(subjectType, principal, req, familyId) {
     user_agent: req.get?.("user-agent"),
     expires_at: expiresAt,
   });
+  console.log("got here");
 
   return {
     token: rawToken,
@@ -137,18 +143,27 @@ async function createRefreshToken(subjectType, principal, req, familyId) {
 
 async function issueTokenPair(subjectType, principal, req, familyId) {
   const access = createAccessToken(subjectType, principal);
-  const refresh = await createRefreshToken(subjectType, principal, req, familyId);
+  const refresh = await createRefreshToken(
+    subjectType,
+    principal,
+    req,
+    familyId,
+  );
 
   return { access, refresh };
 }
 
 async function rotateRefreshToken(rawRefreshToken, req) {
   const tokenHash = RefreshToken.hashToken(rawRefreshToken);
-  const storedToken = await RefreshToken.findOne({ token_hash: tokenHash }).populate(
-    "subject",
-  );
+  const storedToken = await RefreshToken.findOne({
+    token_hash: tokenHash,
+  }).populate("subject");
 
-  if (!storedToken || storedToken.revoked_at || storedToken.expires_at <= new Date()) {
+  if (
+    !storedToken ||
+    storedToken.revoked_at ||
+    storedToken.expires_at <= new Date()
+  ) {
     throw new Error("Invalid or expired refresh token");
   }
 

@@ -21,13 +21,20 @@ function pickPrimaryMonnifyAccount(monnifyAccount) {
   return account;
 }
 
+function last4(value) {
+  const text = String(value || "").trim();
+  return text ? text.slice(-4) : undefined;
+}
+
 async function createWalletFromMonnifyAccount({
   ownerType,
   owner,
   monnifyAccount,
+  kyc,
 }) {
   const account = pickPrimaryMonnifyAccount(monnifyAccount);
   const publicIdField = `id`;
+  const hasKyc = Boolean(kyc?.bvn || kyc?.nin);
 
   return Wallet.create({
     wallet_id: makeWalletId(),
@@ -51,6 +58,15 @@ async function createWalletFromMonnifyAccount({
       collection_channel: monnifyAccount.collectionChannel,
       raw_response: monnifyAccount,
     },
+    kyc_info: hasKyc
+      ? {
+          status: "VERIFIED",
+          bvn_last4: last4(kyc.bvn),
+          nin_last4: last4(kyc.nin),
+          submitted_at: new Date(),
+          verified_at: new Date(),
+        }
+      : undefined,
   });
 }
 

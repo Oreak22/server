@@ -147,7 +147,7 @@ const businessAuthSchema = new mongoose.Schema(
 
 const businessSchema = new mongoose.Schema(
   {
-    business_id: { type: String, required: true, unique: true, trim: true },
+    // business_id: { type: String, required: true, unique: true, trim: true },
     name: { type: String, required: true, trim: true },
     phone_number: { type: String, required: true, trim: true },
     contact_email: {

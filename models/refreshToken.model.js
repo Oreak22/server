@@ -18,7 +18,7 @@ const refreshTokenSchema = new mongoose.Schema(
       refPath: "subject_model",
       required: true,
     },
-    subject_public_id: { type: String, required: true, trim: true },
+    subject_public_id: { type: String, trim: true },
     token_hash: { type: String, required: true, unique: true },
     family_id: { type: String, required: true, index: true },
     replaced_by_token_hash: { type: String },

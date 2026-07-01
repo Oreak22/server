@@ -23,6 +23,24 @@ const monnifyAccountSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const kycInfoSchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      enum: ["NOT_SUBMITTED", "PENDING", "VERIFIED", "REJECTED"],
+      default: "NOT_SUBMITTED",
+    },
+    bvn_last4: { type: String, trim: true },
+    nin_last4: { type: String, trim: true },
+    submitted_at: { type: Date },
+    verified_at: { type: Date },
+    rejection_reason: { type: String, trim: true },
+    response_code: { type: String, trim: true },
+    response_message: { type: String, trim: true },
+  },
+  { _id: false },
+);
+
 const walletSchema = new mongoose.Schema(
   {
     wallet_id: { type: String, required: true, unique: true, trim: true },
@@ -64,6 +82,7 @@ const walletSchema = new mongoose.Schema(
     currency: { type: String, default: "NGN", uppercase: true, trim: true },
     current_balance: { type: Number, required: true, default: 0, min: 0 },
     monnify: { type: monnifyAccountSchema, default: {} },
+    kyc_info: { type: kycInfoSchema, default: {} },
     status: {
       type: String,
       enum: ["ACTIVE", "INACTIVE", "SUSPENDED"],
@@ -80,10 +99,6 @@ const walletSchema = new mongoose.Schema(
 
 walletSchema.index({ owner_type: 1, owner_id: 1 }, { unique: true });
 walletSchema.index({ business_id: 1 }, { unique: true, sparse: true });
-walletSchema.index(
-  { "monnify.account_reference": 1 },
-  { unique: true, sparse: true },
-);
 
 // One wallet has many transactions.
 walletSchema.virtual("transactions", {
@@ -108,10 +123,7 @@ walletSchema.pre("validate", async function () {
 
     if (!this.owner && this.owner_id) {
       const OwnerModel = mongoose.model(this.owner_model);
-      const publicIdField = `${this.owner_type.toLowerCase()}_id`;
-      const owner = await OwnerModel.findOne({
-        [publicIdField]: this.owner_id,
-      }).select("_id");
+      const owner = await OwnerModel.findById(this.owner_id).select("_id");
 
       if (!owner) {
         throw new Error(

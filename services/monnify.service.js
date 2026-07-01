@@ -118,9 +118,9 @@ async function deallocateVirtualAccount(ownerType, ownerId) {
 
   try {
     const response = await fetch(
-      `${getBaseUrl()}/api/v2/bank-transfer/reserved-accounts/${accountReference}`,
+      `${getBaseUrl()}/api/v1/bank-transfer/reserved-accounts/reference/${accountReference}`,
       {
-        method: "DELETE",
+        method: "DELETE", 
         headers: {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
@@ -144,6 +144,52 @@ async function deallocateVirtualAccount(ownerType, ownerId) {
   }
 }
 
+async function updateReservedAccountKyc({ accountReference, bvn, nin }) {
+  assertMonnifyConfig();
+
+  if (!accountReference) {
+    throw new Error("Monnify account reference is required");
+  }
+
+  const requestBody = {};
+  if (bvn) requestBody.bvn = bvn;
+  if (nin) requestBody.nin = nin;
+
+  if (!requestBody.bvn && !requestBody.nin) {
+    throw new Error("BVN or NIN is required");
+  }
+
+  const accessToken = await getMonnifyAccessToken();
+  const defaultPath = `/api/v1/bank-transfer/reserved-accounts/${encodeURIComponent(
+    accountReference,
+  )}/kyc-info`;
+  const path = (
+    process.env.MONNIFY_UPDATE_KYC_PATH_TEMPLATE || defaultPath
+  ).replace(":accountReference", encodeURIComponent(accountReference));
+
+  const response = await fetch(`${getBaseUrl()}${path}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(requestBody),
+  });
+  const payload = await response.json();
+
+  if (!response.ok || !payload.requestSuccessful) {
+    throw new Error(
+      payload.responseMessage || "Monnify reserved account KYC update failed",
+    );
+  }
+
+  return {
+    ...(payload.responseBody || {}),
+    responseCode: payload.responseCode,
+    responseMessage: payload.responseMessage,
+  };
+}
+
 function verifyWebhookSignature(rawBody, signature) {
   if (!signature || !process.env.MONNIFY_SECRET_KEY) return false;
 
@@ -164,6 +210,7 @@ function verifyWebhookSignature(rawBody, signature) {
 module.exports = {
   reserveVirtualAccount,
   deallocateVirtualAccount,
+  updateReservedAccountKyc,
   verifyWebhookSignature,
   buildAccountReference,
 };

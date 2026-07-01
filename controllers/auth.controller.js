@@ -138,6 +138,7 @@ function publicActor(actor) {
 }
 
 function pickPassword(body) {
+  console.log(body);
   return body.password || body.auth?.password;
 }
 
@@ -169,6 +170,9 @@ function generateSixDigitCode() {
 async function sendVerificationCode(subjectType, actor, req) {
   const config = actorConfig[subjectType];
   const email = config.email(actor);
+  console.log(
+    `this is the actor[config.publicIdField]:${actor[config.publicIdField]}`,
+  );
 
   if (!email) {
     throw new Error("A valid email is required for verification");
@@ -225,14 +229,19 @@ async function createWalletAndSession(
     throw new Error(`Unsupported subject type: ${subjectType}`);
   }
 
+  const kyc = {
+    bvn: req.body.kyc?.bvn || req.body.monnify_kyc?.bvn,
+    nin: req.body.kyc?.nin || req.body.monnify_kyc?.nin,
+  };
+
   const monnifyAccount = await reserveVirtualAccount({
     ownerType: subjectType,
     ownerId: actor[config.publicIdField],
     accountName: config.accountName(actor),
     customerEmail: config.email(actor),
     customerName: config.name(actor),
-    bvn: req.body.kyc?.bvn || req.body.monnify_kyc?.bvn,
-    nin: req.body.kyc?.nin || req.body.monnify_kyc?.nin,
+    bvn: kyc.bvn,
+    nin: kyc.nin,
   });
 
   await actor.save();
@@ -240,6 +249,7 @@ async function createWalletAndSession(
     ownerType: subjectType,
     owner: actor,
     monnifyAccount,
+    kyc,
   });
 
   if (!issueSession) {
@@ -257,6 +267,7 @@ async function createWalletAndSession(
 
 async function completeRegistration(subjectType, actor, req, res) {
   try {
+    console.log(req.body);
     const config = actorConfig[subjectType];
     const password = pickPassword(req.body);
 
@@ -280,7 +291,7 @@ async function completeRegistration(subjectType, actor, req, res) {
     }
 
     const duplicateChecks = [
-      { [config.publicIdField]: actor[config.publicIdField] },
+      { _id: actor._id },
       { [config.emailPath]: customerEmail },
       { [config.phonePath]: getValueByPath(actor, config.phonePath) },
     ].filter((condition) => Object.values(condition)[0]);
@@ -371,7 +382,6 @@ async function registerClientWithGoogle(req, res, next) {
     const profile = req.body.profile || {};
 
     const user = new User({
-      user_id: req.body.user_id || makePublicId("usr"),
       account_type: "B2C_CUSTOMER",
       profile: {
         first_name: profile.first_name || firstName || "Oloja",
@@ -519,12 +529,15 @@ async function loginActor(subjectType, req, res, next) {
 
     return res.json({
       message: "Login successful",
+      success: true,
       data: {
-        actor: publicActor(actor),
-        access_token: tokens.access.token,
-        access_token_expires_in: tokens.access.expires_in,
-        refresh_token:
-          subjectType === "ADMIN" ? undefined : tokens.refresh.token,
+        user: publicActor(actor),
+        tokens: {
+          accessToken: tokens.access.token,
+          refreshToken:
+            subjectType === "ADMIN" ? undefined : tokens.refresh.token,
+          expiresIn: tokens.access.expires_in,
+        },
         refresh_token_expires_at: tokens.refresh.expires_at,
       },
     });
@@ -614,7 +627,7 @@ async function verifyEmail(req, res, next) {
       .trim();
     const publicId = req.body.public_id || req.body[config.publicIdField];
     const lookup = publicId
-      ? { [config.publicIdField]: publicId }
+      ? { _id: publicId }
       : { [config.emailPath]: email };
 
     if (!publicId && !email) {
@@ -679,7 +692,7 @@ async function resendEmailVerification(req, res, next) {
       .trim();
     const publicId = req.body.public_id || req.body[config.publicIdField];
     const lookup = publicId
-      ? { [config.publicIdField]: publicId }
+      ? { _id: publicId }
       : { [config.emailPath]: email };
 
     if (!publicId && !email) {

@@ -157,7 +157,7 @@ const adminShiftSchema = new mongoose.Schema(
 
 const adminSchema = new mongoose.Schema(
   {
-    admin_id: { type: String, required: true, unique: true, trim: true },
+    // admin_id: { type: String, required: true, unique: true, trim: true },
     role: { type: String, enum: adminRoles, required: true },
     profile: { type: adminProfileSchema, required: true },
     employment_details: { type: adminEmploymentSchema, default: {} },
@@ -188,11 +188,13 @@ const adminSchema = new mongoose.Schema(
   },
 );
 
-adminSchema.index({ role: 1, account_status: 1 });
+adminSchema.index({ role: 1 });
+adminSchema.index({ account_status: 1 });
 adminSchema.index({ availability_status: 1 });
 adminSchema.index({ "access_scope.business_ids": 1 });
 adminSchema.index({ "access_scope.service_categories": 1 });
-adminSchema.index({ "access_scope.cities": 1, "access_scope.states": 1 });
+adminSchema.index({ "access_scope.cities": 1 });
+adminSchema.index({ "access_scope.states": 1 });
 
 adminSchema.virtual("delivery_wallet", {
   ref: "Wallet",
@@ -201,12 +203,10 @@ adminSchema.virtual("delivery_wallet", {
   justOne: true,
 });
 
-adminSchema.pre("validate", function (next) {
+adminSchema.pre("validate", function () {
   if (!this.permissions?.length) {
     this.permissions = [...(defaultPermissionsByRole[this.role] || [])];
   }
-
-  next();
 });
 
 adminSchema.path("permissions").validate(function (permissions) {

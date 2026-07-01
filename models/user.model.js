@@ -113,7 +113,6 @@ const userSchema = new mongoose.Schema(
 
 userSchema.index({ "b2b_config.wallet_id": 1 }, { sparse: true });
 userSchema.index({ "profile.phone_number": 1 });
-userSchema.index({ "auth.firebase_uid": 1 }, { unique: true, sparse: true });
 
 userSchema.path("saved_locations").validate(function (locations) {
   const locationIds = locations.map((location) => location.location_id);

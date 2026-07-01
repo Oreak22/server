@@ -9,7 +9,9 @@ function getTransporter() {
   const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length) {
-    throw new Error(`Missing email environment variables: ${missing.join(", ")}`);
+    throw new Error(
+      `Missing email environment variables: ${missing.join(", ")}`,
+    );
   }
 
   transporter = nodemailer.createTransport({
@@ -142,7 +144,12 @@ function buildEmailVerificationEmail({ name, code, expiresInMinutes }) {
 </html>`;
 }
 
-async function sendPasswordResetEmail({ to, name, resetLink, expiresInMinutes }) {
+async function sendPasswordResetEmail({
+  to,
+  name,
+  resetLink,
+  expiresInMinutes,
+}) {
   const from = process.env.EMAIL_FROM || process.env.SMTP_USER;
 
   return getTransporter().sendMail({

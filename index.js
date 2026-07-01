@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const authRoutes = require("./routes/auth.route");
 const walletRoutes = require("./routes/wallet.route");
 const monnifyRoutes = require("./routes/monnify.route");
+const profileRoutes = require("./routes/profile.route");
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static("public"));
@@ -20,6 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/wallets", walletRoutes);
 app.use("/api/v1/monnify", monnifyRoutes);
+app.use("/api/v1/profile", profileRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);

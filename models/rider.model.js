@@ -102,7 +102,7 @@ const riderAuthSchema = new mongoose.Schema(
 
 const riderSchema = new mongoose.Schema(
   {
-    rider_id: { type: String, required: true, unique: true, trim: true },
+    // rider_id: { type: String, required: true, unique: true, trim: true },
     personal_info: { type: riderPersonalInfoSchema, required: true },
     auth: { type: riderAuthSchema, default: undefined },
     employment_details: { type: employmentDetailsSchema, required: true },
