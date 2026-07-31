@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oloja Live Order & Rider Tracking Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: rgba(30, 41, 59, 0.7);
+      --border-color: rgba(255, 255, 255, 0.1);
+      --accent: #6366f1;
+      --accent-hover: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a5b4fc, #6366f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #e2e8f0;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 900px) {
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    input {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      color: white;
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    button.btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    button.btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    button.btn-success {
+      background: var(--success);
+    }
+
+    button.btn-success:hover {
+      background: #059669;
+    }
+
+    .log-container {
+      background: #020617;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.85rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .log-entry {
+      padding: 0.75rem;
+      border-radius: 6px;
+      background: rgba(30, 41, 59, 0.5);
+      border-left: 4px solid var(--accent);
+    }
+
+    .log-entry.order_created { border-left-color: var(--warning); }
+    .log-entry.order_paid { border-left-color: var(--success); }
+    .log-entry.order_status_updated { border-left-color: #3b82f6; }
+    .log-entry.order_cancelled { border-left-color: var(--danger); }
+    .log-entry.rider_location_updated { border-left-color: #ec4899; }
+    .log-entry.delivery_dispatch_offer { border-left-color: #8b5cf6; }
+
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+      font-weight: bold;
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>Oloja Live Order & Rider Tracking Dashboard</h1>
+    <div class="badge">
+      <div id="statusDot" class="status-dot"></div>
+      <span id="statusText">Disconnected</span>
+    </div>
+  </header>
+
+  <div class="grid-3">
+    <!-- Connection Control -->
+    <div class="card">
+      <div class="card-title">🔑 Authentication</div>
+      <div class="form-group">
+        <label for="jwtToken">Access Token (Bearer JWT)</label>
+        <input type="text" id="jwtToken" placeholder="Paste JWT access token...">
+      </div>
+      <div class="btn-group">
+        <button id="connectBtn">Connect Socket</button>
+        <button id="disconnectBtn" class="btn-secondary">Disconnect</button>
+      </div>
+    </div>
+
+    <!-- Order Room Control -->
+    <div class="card">
+      <div class="card-title">📦 Order Channel</div>
+      <div class="form-group">
+        <label for="orderId">Order ID</label>
+        <input type="text" id="orderId" placeholder="e.g. ord_f5d8fca2ef02">
+      </div>
+      <div class="btn-group">
+        <button id="joinOrderBtn">Join Order Room</button>
+        <button id="leaveOrderBtn" class="btn-secondary">Leave Room</button>
+      </div>
+    </div>
+
+    <!-- Rider GPS Telemetry Control -->
+    <div class="card">
+      <div class="card-title">🛵 Rider GPS Simulation</div>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-bottom:0.5rem;">
+        <div>
+          <label for="gpsLat">Lat</label>
+          <input type="text" id="gpsLat" value="6.5244">
+        </div>
+        <div>
+          <label for="gpsLng">Lng</label>
+          <input type="text" id="gpsLng" value="3.3792">
+        </div>
+      </div>
+      <div class="btn-group">
+        <button id="sendGpsBtn" class="btn-success">Send GPS Ping</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Event Stream -->
+  <div class="card">
+    <div class="card-title" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>📡 Live WebSockets Feed</span>
+      <button id="clearLogsBtn" class="btn-secondary" style="padding: 0.3rem 0.75rem; font-size: 0.8rem;">Clear Feed</button>
+    </div>
+    <div id="logContainer" class="log-container">
+      <div style="color: var(--text-muted); text-align: center; margin-top: 2rem;">
+        Connect with a valid JWT token to stream live orders and rider GPS coordinates...
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let socket = null;
+
+  const jwtTokenInput = document.getElementById('jwtToken');
+  const connectBtn = document.getElementById('connectBtn');
+  const disconnectBtn = document.getElementById('disconnectBtn');
+  const statusDot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  const orderIdInput = document.getElementById('orderId');
+  const joinOrderBtn = document.getElementById('joinOrderBtn');
+  const leaveOrderBtn = document.getElementById('leaveOrderBtn');
+  const sendGpsBtn = document.getElementById('sendGpsBtn');
+  const gpsLatInput = document.getElementById('gpsLat');
+  const gpsLngInput = document.getElementById('gpsLng');
+  const logContainer = document.getElementById('logContainer');
+  const clearLogsBtn = document.getElementById('clearLogsBtn');
+
+  function addLog(eventName, data) {
+    if (logContainer.children.length === 1 && logContainer.children[0].tagName === 'DIV' && logContainer.children[0].innerText.includes('Connect with')) {
+      logContainer.innerHTML = '';
+    }
+
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${eventName}`;
+
+    const now = new Date().toLocaleTimeString();
+    entry.innerHTML = `
+      <div class="log-header">
+        <span>⚡ [EVENT: ${eventName}]</span>
+        <span style="color: var(--text-muted); font-size:0.75rem;">${now}</span>
+      </div>
+      <pre>${JSON.stringify(data, null, 2)}</pre>
+    `;
+
+    logContainer.prepend(entry);
+  }
+
+  connectBtn.addEventListener('click', () => {
+    const token = jwtTokenInput.value.trim();
+    if (!token) {
+      alert('Please enter a valid JWT access token.');
+      return;
+    }
+
+    if (socket) {
+      socket.disconnect();
+    }
+
+    socket = io({
+      auth: { token }
+    });
+
+    socket.on('connect', () => {
+      statusDot.classList.add('connected');
+      statusText.innerText = `Connected (${socket.id})`;
+      addLog('system_connect', { socket_id: socket.id, message: 'Connected to Oloja WebSockets' });
+    });
+
+    socket.on('disconnect', (reason) => {
+      statusDot.classList.remove('connected');
+      statusText.innerText = 'Disconnected';
+      addLog('system_disconnect', { reason });
+    });
+
+    socket.on('connect_error', (err) => {
+      statusDot.classList.remove('connected');
+      statusText.innerText = 'Connection Error';
+      addLog('system_error', { error: err.message });
+    });
+
+    // Listen to Oloja order & rider lifecycle events
+    const events = [
+      'order_created',
+      'order_paid',
+      'order_status_updated',
+      'order_cancelled',
+      'rider_location_updated',
+      'delivery_dispatch_offer',
+      'order_room_joined',
+      'order_room_left'
+    ];
+
+    events.forEach(event => {
+      socket.on(event, (payload) => {
+        addLog(event, payload);
+      });
+    });
+  });
+
+  disconnectBtn.addEventListener('click', () => {
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+  });
+
+  joinOrderBtn.addEventListener('click', () => {
+    const orderId = orderIdInput.value.trim();
+    if (!socket || !socket.connected) {
+      alert('Connect to WebSockets first!');
+      return;
+    }
+    if (!orderId) {
+      alert('Enter an order ID to join.');
+      return;
+    }
+    socket.emit('join_order', orderId);
+  });
+
+  leaveOrderBtn.addEventListener('click', () => {
+    const orderId = orderIdInput.value.trim();
+    if (!socket || !socket.connected) {
+      alert('Connect to WebSockets first!');
+      return;
+    }
+    if (!orderId) {
+      alert('Enter an order ID to leave.');
+      return;
+    }
+    socket.emit('leave_order', orderId);
+  });
+
+  sendGpsBtn.addEventListener('click', () => {
+    if (!socket || !socket.connected) {
+      alert('Connect to WebSockets first!');
+      return;
+    }
+    const lat = parseFloat(gpsLatInput.value) || 6.5244;
+    const lng = parseFloat(gpsLngInput.value) || 3.3792;
+    const activeOrderId = orderIdInput.value.trim() || undefined;
+
+    socket.emit('update_location', {
+      latitude: lat,
+      longitude: lng,
+      speed_kmh: 25,
+      heading_degrees: 180,
+      active_order_id: activeOrderId
+    });
+
+    addLog('client_gps_sent', { latitude: lat, longitude: lng, active_order_id: activeOrderId });
+  });
+
+  clearLogsBtn.addEventListener('click', () => {
+    logContainer.innerHTML = '';
+  });
+</script>
+</body>
+</html>

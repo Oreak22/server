@@ -8,6 +8,8 @@ const RefreshToken = require("./refreshToken.model");
 const MonnifyWebhookEvent = require("./monnifyWebhookEvent.model");
 const PasswordResetToken = require("./passwordResetToken.model");
 const EmailVerificationCode = require("./emailVerificationCode.model");
+const MenuItem = require("./menuItem.model");
+const Order = require("./order.model");
 
 module.exports = {
   User,
@@ -20,4 +22,7 @@ module.exports = {
   MonnifyWebhookEvent,
   PasswordResetToken,
   EmailVerificationCode,
+  MenuItem,
+  Order,
 };
+
