@@ -1,0 +1,540 @@
+{
+  "info": {
+    "_postman_id": "oloja-api-master-collection",
+    "name": "Oloja Backend API Master Collection",
+    "description": "Complete Postman API Collection for Oloja Multi-Actor E-Commerce & Delivery Platform including Auth, Profiles, Restaurants, Orders, Wallets, WebSockets, Rider Telemetry, and Admin Dashboard Management APIs.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "business_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rider_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Register User (Client)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"first_name\": \"John\",\n    \"last_name\": \"Doe\",\n    \"email\": \"user@example.com\",\n    \"phone_number\": \"+2348012345678\"\n  },\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/clients/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "clients", "register"] }
+          }
+        },
+        {
+          "name": "Login User (Client)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/clients/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "clients", "login"] }
+          }
+        },
+        {
+          "name": "Register Business (Merchant)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Taste of Lagos Bistro\",\n  \"contact_email\": \"bistro@example.com\",\n  \"phone_number\": \"+2348123456789\",\n  \"password\": \"Password123!\",\n  \"business_type\": \"RESTAURANT\",\n  \"locations\": [\n    {\n      \"street_address\": \"45 Commercial Ave\",\n      \"city\": \"Lagos\",\n      \"state\": \"Lagos\",\n      \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.3792, 6.5244] }\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/businesses/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "businesses", "register"] }
+          }
+        },
+        {
+          "name": "Login Business (Merchant)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"bistro@example.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/businesses/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "businesses", "login"] }
+          }
+        },
+        {
+          "name": "Register Rider",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"personal_info\": {\n    \"full_name\": \"David Rider\",\n    \"phone_number\": \"+2349012345678\",\n    \"emergency_contact\": \"+2348000000000\"\n  },\n  \"employment_details\": {\n    \"employment_status\": \"FULL_TIME\",\n    \"base_daily_salary\": 5000\n  },\n  \"assigned_asset\": {\n    \"vehicle_id\": \"veh_9901\",\n    \"vehicle_type\": \"MOTORCYCLE\",\n    \"license_plate\": \"LAG-8892\",\n    \"tracker_device_id\": \"tr_9901\"\n  },\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/riders/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "riders", "register"] }
+          }
+        },
+        {
+          "name": "Login Rider",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"+2349012345678\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/riders/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "riders", "login"] }
+          }
+        },
+        {
+          "name": "Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"full_name\": \"Super Admin\",\n    \"email\": \"admin@oloja.com\",\n    \"phone_number\": \"+2347012345678\"\n  },\n  \"role\": \"SUPER_ADMIN\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/admins/register", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "admins", "register"] }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@oloja.com\",\n  \"password\": \"Password123!\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/admins/login", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "admins", "login"] }
+          }
+        },
+        {
+          "name": "Verify Email",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subject_type\": \"USER\",\n  \"email\": \"user@example.com\",\n  \"code\": \"123456\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/email/verify", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "email", "verify"] }
+          }
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"REFRESH_TOKEN_HERE\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/refresh", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "refresh"] }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"REFRESH_TOKEN_HERE\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/auth/logout", "host": ["{{base_url}}"], "path": ["api", "v1", "auth", "logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "👤 Profile Management",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/profile", "host": ["{{base_url}}"], "path": ["api", "v1", "profile"] }
+          }
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile\": {\n    \"first_name\": \"Johnny\",\n    \"last_name\": \"Updated\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/profile", "host": ["{{base_url}}"], "path": ["api", "v1", "profile"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏪 Restaurants & Menu Management",
+      "item": [
+        {
+          "name": "List Restaurants",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/restaurants", "host": ["{{base_url}}"], "path": ["api", "v1", "restaurants"] }
+          }
+        },
+        {
+          "name": "Get Restaurant Details",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/restaurants/:businessId", "host": ["{{base_url}}"], "path": ["api", "v1", "restaurants", ":businessId"], "variable": [{ "key": "businessId", "value": "6a6c9b4d62716f045aea00f4" }] }
+          }
+        },
+        {
+          "name": "Get Restaurant Menu",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/restaurants/:businessId/menu", "host": ["{{base_url}}"], "path": ["api", "v1", "restaurants", ":businessId", "menu"], "variable": [{ "key": "businessId", "value": "6a6c9b4d62716f045aea00f4" }] }
+          }
+        },
+        {
+          "name": "Create Menu Item (Business)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{business_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jollof Rice & Grilled Chicken\",\n  \"description\": \"Smoky Nigerian Jollof Rice served with seasoned grilled chicken leg\",\n  \"price\": 3500,\n  \"category\": \"Main Dishes\",\n  \"preparation_time_minutes\": 20\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/restaurants/menu-items", "host": ["{{base_url}}"], "path": ["api", "v1", "restaurants", "menu-items"] }
+          }
+        },
+        {
+          "name": "Update Menu Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{business_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 3800,\n  \"is_available\": true\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/restaurants/menu-items/:itemId", "host": ["{{base_url}}"], "path": ["api", "v1", "restaurants", "menu-items", ":itemId"], "variable": [{ "key": "itemId", "value": "ITEM_ID_HERE" }] }
+          }
+        },
+        {
+          "name": "Delete Menu Item",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{business_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/restaurants/menu-items/:itemId", "host": ["{{base_url}}"], "path": ["api", "v1", "restaurants", "menu-items", ":itemId"], "variable": [{ "key": "itemId", "value": "ITEM_ID_HERE" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Orders & Checkout Lifecycle",
+      "item": [
+        {
+          "name": "Create Order (User)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business\": \"BUSINESS_MONGO_ID\",\n  \"items\": [\n    { \"menu_item\": \"MENU_ITEM_ID\", \"quantity\": 2 }\n  ],\n  \"delivery_address\": {\n    \"street_address\": \"15 Broad Street\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.3792, 6.5244] }\n  },\n  \"delivery_fee\": 1000,\n  \"driver_tip\": 500\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/orders", "host": ["{{base_url}}"], "path": ["api", "v1", "orders"] }
+          }
+        },
+        {
+          "name": "Get My Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/orders", "host": ["{{base_url}}"], "path": ["api", "v1", "orders"] }
+          }
+        },
+        {
+          "name": "Get Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/orders/:orderId", "host": ["{{base_url}}"], "path": ["api", "v1", "orders", ":orderId"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        },
+        {
+          "name": "Pay Order with Delivery Wallet",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/orders/:orderId/pay", "host": ["{{base_url}}"], "path": ["api", "v1", "orders", ":orderId", "pay"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        },
+        {
+          "name": "Update Order Status (Business / Rider / Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{business_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_status\": \"PREPARING\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/orders/:orderId/status", "host": ["{{base_url}}"], "path": ["api", "v1", "orders", ":orderId", "status"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        },
+        {
+          "name": "Cancel Order & Process Refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Changed mind before food preparation\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/orders/:orderId/cancel", "host": ["{{base_url}}"], "path": ["api", "v1", "orders", ":orderId", "cancel"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        },
+        {
+          "name": "Assign Rider to Order (Admin / Business)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rider_id\": \"RIDER_MONGO_ID\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/orders/:orderId/assign-rider", "host": ["{{base_url}}"], "path": ["api", "v1", "orders", ":orderId", "assign-rider"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "💳 Wallets & Monnify",
+      "item": [
+        {
+          "name": "Get My Wallet",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/wallets/me", "host": ["{{base_url}}"], "path": ["api", "v1", "wallets", "me"] }
+          }
+        },
+        {
+          "name": "Get Wallet Transactions",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/wallets/transactions", "host": ["{{base_url}}"], "path": ["api", "v1", "wallets", "transactions"] }
+          }
+        },
+        {
+          "name": "Monnify Payment Webhook Callback",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "monnify-signature", "value": "MONNIFY_HASH_SIGNATURE_HERE" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventType\": \"SUCCESSFUL_TRANSACTION\",\n  \"eventData\": {\n    \"transactionReference\": \"MNFY_99018274\",\n    \"paymentReference\": \"PAY_889123\",\n    \"amountPaid\": \"10000.00\",\n    \"totalPayable\": \"10000.00\",\n    \"destinationAccountNumber\": \"9901827491\",\n    \"paidOn\": \"2026-07-31T12:00:00.000+0100\"\n  }\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/monnify/webhook", "host": ["{{base_url}}"], "path": ["api", "v1", "monnify", "webhook"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛵 Rider & Delivery Workflow",
+      "item": [
+        {
+          "name": "Update Rider Duty Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{rider_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"AVAILABLE\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/riders/duty-status", "host": ["{{base_url}}"], "path": ["api", "v1", "riders", "duty-status"] }
+          }
+        },
+        {
+          "name": "Update GPS Telemetry (REST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{rider_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 6.5244,\n  \"longitude\": 3.3792,\n  \"speed_kmh\": 35,\n  \"heading_degrees\": 180\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/riders/location", "host": ["{{base_url}}"], "path": ["api", "v1", "riders", "location"] }
+          }
+        },
+        {
+          "name": "Get Available Deliveries",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{rider_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/riders/available-deliveries", "host": ["{{base_url}}"], "path": ["api", "v1", "riders", "available-deliveries"] }
+          }
+        },
+        {
+          "name": "Accept Delivery Job",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{rider_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/riders/orders/:orderId/accept", "host": ["{{base_url}}"], "path": ["api", "v1", "riders", "orders", ":orderId", "accept"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        },
+        {
+          "name": "Decline Delivery Job",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{rider_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/riders/orders/:orderId/decline", "host": ["{{base_url}}"], "path": ["api", "v1", "riders", "orders", ":orderId", "decline"], "variable": [{ "key": "orderId", "value": "ord_37c28dc71d1a" }] }
+          }
+        },
+        {
+          "name": "Get Active Delivery Order",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{rider_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/riders/active-order", "host": ["{{base_url}}"], "path": ["api", "v1", "riders", "active-order"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Admin Dashboard & Disputes",
+      "item": [
+        {
+          "name": "Get System Metrics & Platform Summary",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/admin/metrics", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "metrics"] }
+          }
+        },
+        {
+          "name": "Create Order Dispute",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"ORDER_ID_HERE\",\n  \"reason\": \"ITEM_MISSING\",\n  \"description\": \"One drink was missing from the delivered order\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/disputes", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "disputes"] }
+          }
+        },
+        {
+          "name": "List Order Disputes",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/admin/disputes?status=OPEN", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "disputes"], "query": [{ "key": "status", "value": "OPEN" }] }
+          }
+        },
+        {
+          "name": "Get Dispute by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/admin/disputes/:disputeId", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "disputes", ":disputeId"], "variable": [{ "key": "disputeId", "value": "dsp_02f17c862d02" }] }
+          }
+        },
+        {
+          "name": "Resolve Dispute & Process Refund",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RESOLVED_REFUNDED\",\n  \"resolution_notes\": \"Approved customer refund after validating missing item with business\",\n  \"refund_amount\": 1500\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/disputes/:disputeId/resolve", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "disputes", ":disputeId", "resolve"], "variable": [{ "key": "disputeId", "value": "dsp_02f17c862d02" }] }
+          }
+        },
+        {
+          "name": "List Platform Accounts (Users / Businesses / Riders)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{admin_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/admin/users?type=USER", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "users"], "query": [{ "key": "type", "value": "USER" }] }
+          }
+        },
+        {
+          "name": "Update Account Status (Suspend / Activate)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{admin_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"account_type\": \"USER\",\n  \"status\": \"SUSPENDED\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/users/:userId/status", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "users", ":userId", "status"], "variable": [{ "key": "userId", "value": "USER_ID_HERE" }] }
+          }
+        }
+      ]
+    }
+  ]
+}

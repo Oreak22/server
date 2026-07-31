@@ -947,6 +947,67 @@ Tracks payment webhook events.
 | POST   | `/auth/refresh`                 | Refresh access token      |
 | POST   | `/auth/logout`                  | Logout and revoke token   |
 
+### Profile Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/v1/profile` | Get current logged-in user profile |
+| PUT | `/api/v1/profile` | Update current profile details |
+
+### Restaurant & Menu Management Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/v1/restaurants` | List active restaurants with filtering |
+| GET | `/api/v1/restaurants/:businessId` | Get single restaurant details |
+| GET | `/api/v1/restaurants/:businessId/menu` | List menu items for a restaurant |
+| POST | `/api/v1/restaurants/menu-items` | Create new menu item (Merchant only) |
+| PUT | `/api/v1/restaurants/menu-items/:itemId` | Update menu item details |
+| DELETE | `/api/v1/restaurants/menu-items/:itemId` | Delete a menu item |
+
+### Order & Checkout Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| POST | `/api/v1/orders` | Place a new delivery order |
+| GET | `/api/v1/orders` | List user/merchant orders |
+| GET | `/api/v1/orders/:orderId` | Get detailed order status |
+| POST | `/api/v1/orders/:orderId/pay` | Pay order using delivery wallet |
+| PATCH | `/api/v1/orders/:orderId/status` | Update order status (`ACCEPTED`, `PREPARING`, `IN_TRANSIT`, `DELIVERED`) |
+| POST | `/api/v1/orders/:orderId/cancel` | Cancel order & auto-refund customer |
+| POST | `/api/v1/orders/:orderId/assign-rider` | Admin/Business assign rider to order |
+
+### Wallet & Monnify Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/v1/wallets/me` | Get current wallet balance & details |
+| GET | `/api/v1/wallets/transactions` | Get wallet transaction history |
+| POST | `/api/v1/monnify/webhook` | Monnify payment webhook handler |
+
+### Rider Telemetry & Dispatch Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| PATCH | `/api/v1/riders/duty-status` | Toggle duty status (`AVAILABLE`, `OFFLINE`, `ON_BREAK`) |
+| POST | `/api/v1/riders/location` | Stream GPS coordinates via REST |
+| GET | `/api/v1/riders/available-deliveries` | List available delivery jobs |
+| POST | `/api/v1/riders/orders/:orderId/accept` | Accept delivery job offer |
+| POST | `/api/v1/riders/orders/:orderId/decline` | Decline delivery job offer |
+| GET | `/api/v1/riders/active-order` | Get currently assigned active delivery order |
+
+### Admin Dashboard & Dispute Management Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/v1/admin/metrics` | Real-time platform summary & system metrics |
+| POST | `/api/v1/admin/disputes` | Open a new order dispute |
+| GET | `/api/v1/admin/disputes` | List disputes with filters |
+| GET | `/api/v1/admin/disputes/:disputeId` | Detailed dispute view |
+| PATCH | `/api/v1/admin/disputes/:disputeId/resolve` | Resolve dispute & process customer refund |
+| GET | `/api/v1/admin/users` | List platform accounts (`USER`, `BUSINESS`, `RIDER`) |
+| PATCH | `/api/v1/admin/users/:userId/status` | Update account status (`ACTIVE`, `SUSPENDED`, `INACTIVE`) |
+
 ---
 
 ## 📝 Environment Variables Required

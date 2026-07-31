@@ -1,9 +1,7 @@
-# Use this workspace to collaborate
+# Postman Local Workspace Config
 workspace:
   id: ""
 
-# All resources in the `postman/` folder are automatically registered in Local View.
-# Point to additional files outside the `postman/` folder to register them individually. Example:
-#localResources:
-#  collections:
-#    - ../tests/E2E Test Collection/
+localResources:
+  collections:
+    - ./postman/collections/oloja_api_collection.json
