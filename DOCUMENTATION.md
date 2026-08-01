@@ -1008,6 +1008,21 @@ Tracks payment webhook events.
 | GET | `/api/v1/admin/users` | List platform accounts (`USER`, `BUSINESS`, `RIDER`) |
 | PATCH | `/api/v1/admin/users/:userId/status` | Update account status (`ACTIVE`, `SUSPENDED`, `INACTIVE`) |
 
+### Laundry Service Subsystem Endpoints
+
+| Method | Endpoint | Description |
+| ------ | -------- | ----------- |
+| GET | `/api/v1/laundry/vendors` | List laundry service vendors |
+| GET | `/api/v1/laundry/vendors/:businessId/catalog` | Get laundry catalog items for vendor |
+| POST | `/api/v1/laundry/catalog` | Create laundry catalog item (Merchant) |
+| PUT | `/api/v1/laundry/catalog/:itemId` | Update laundry catalog item |
+| DELETE | `/api/v1/laundry/catalog/:itemId` | Delete laundry catalog item |
+| POST | `/api/v1/laundry/orders` | Book laundry service (Service Selection, Scheduling Calendar, Inventory/Bag Size) |
+| GET | `/api/v1/laundry/orders` | List customer/vendor laundry orders |
+| POST | `/api/v1/laundry/orders/:orderId/pay` | Pay laundry order with delivery wallet |
+| PATCH | `/api/v1/laundry/orders/:orderId/status` | Update order status (`PICKED_UP`, `WASHING_IN_PROGRESS`, `DELIVERED`, etc.) |
+| POST | `/api/v1/laundry/orders/:orderId/cancel` | Cancel laundry order & auto-refund customer |
+
 ---
 
 ## 📝 Environment Variables Required
