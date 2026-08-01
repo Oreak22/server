@@ -535,6 +535,179 @@
           }
         }
       ]
+    },
+    {
+      "name": "🧺 Laundry Service Subsystem",
+      "item": [
+        {
+          "name": "List Laundry Vendors",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/laundry/vendors", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "vendors"] }
+          }
+        },
+        {
+          "name": "Get Laundry Vendor Catalog",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{base_url}}/api/v1/laundry/vendors/:businessId/catalog", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "vendors", ":businessId", "catalog"], "variable": [{ "key": "businessId", "value": "LAUNDRY_VENDOR_ID" }] }
+          }
+        },
+        {
+          "name": "Create Laundry Catalog Item (Vendor)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{business_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Men's Suit (2-Piece)\",\n  \"category\": \"SUITS_AND_FORMAL\",\n  \"supported_services\": [\"DRY_CLEANING\", \"WASH_AND_IRON\"],\n  \"pricing_type\": \"PER_ITEM\",\n  \"unit_price\": 2500,\n  \"description\": \"Gentle dry cleaning and steam press for formal 2-piece suit\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/laundry/catalog", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "catalog"] }
+          }
+        },
+        {
+          "name": "Book Laundry Service (Bag Weight + Scheduling Calendar)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"business\": \"LAUNDRY_VENDOR_ID\",\n  \"service_type\": \"WASH_AND_FOLD\",\n  \"pricing_mode\": \"BAG_WEIGHT\",\n  \"bag_weight\": {\n    \"weight_kg\": 10,\n    \"price_per_kg\": 600,\n    \"bag_tier\": \"MEDIUM_BAG_10KG\"\n  },\n  \"care_preferences\": {\n    \"detergent_preference\": \"HYPOALLERGENIC\",\n    \"starch_level\": \"LIGHT_STARCH\",\n    \"is_express_turnover\": true,\n    \"special_instructions\": \"Please separate white shirts from dark jeans\"\n  },\n  \"pickup_slot\": {\n    \"date\": \"2026-08-01T09:00:00.000Z\",\n    \"time_slot\": \"09:00 - 11:00 AM\"\n  },\n  \"return_slot\": {\n    \"date\": \"2026-08-02T15:00:00.000Z\",\n    \"time_slot\": \"03:00 - 05:00 PM\"\n  },\n  \"pickup_address\": {\n    \"street_address\": \"12 Victoria Island Way\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.4219, 6.4281] }\n  },\n  \"return_address\": {\n    \"street_address\": \"12 Victoria Island Way\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.4219, 6.4281] }\n  },\n  \"pickup_delivery_fee\": 1000,\n  \"driver_tip\": 500\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/laundry/orders", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "orders"] }
+          }
+        },
+        {
+          "name": "Get My Laundry Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/laundry/orders", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "orders"] }
+          }
+        },
+        {
+          "name": "Pay Laundry Order with Wallet",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/laundry/orders/:orderId/pay", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "orders", ":orderId", "pay"], "variable": [{ "key": "orderId", "value": "LAUNDRY_ORDER_ID" }] }
+          }
+        },
+        {
+          "name": "Update Laundry Order Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{business_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_status\": \"WASHING_IN_PROGRESS\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/laundry/orders/:orderId/status", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "orders", ":orderId", "status"], "variable": [{ "key": "orderId", "value": "LAUNDRY_ORDER_ID" }] }
+          }
+        },
+        {
+          "name": "Cancel Laundry Order & Auto-Refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Need to reschedule pickup\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/laundry/orders/:orderId/cancel", "host": ["{{base_url}}"], "path": ["api", "v1", "laundry", "orders", ":orderId", "cancel"], "variable": [{ "key": "orderId", "value": "LAUNDRY_ORDER_ID" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🏃 Errand Features Subsystem",
+      "item": [
+        {
+          "name": "Calculate Time & Complexity Fee Estimate",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"complexity_tier\": \"GROCERY_SHOPPING\",\n  \"estimated_item_budget\": 15000,\n  \"errand_location\": {\n    \"name\": \"Shoprite Ikeja City Mall\",\n    \"street_address\": \"Obafemi Awolowo Way\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.3582, 6.6173] }\n  },\n  \"dropoff_location\": {\n    \"name\": \"Home\",\n    \"street_address\": \"14 Allen Avenue\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.3521, 6.5985] }\n  },\n  \"driver_tip\": 1000\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/errands/estimate", "host": ["{{base_url}}"], "path": ["api", "v1", "errands", "estimate"] }
+          }
+        },
+        {
+          "name": "Create Errand Request (Task Description + Budget + Locations)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"task_description\": \"Please buy 2 bags of jasmine rice, 1 crate of eggs, and 3 bottles of olive oil from Shoprite and bring to 14 Allen Avenue.\",\n  \"errand_category\": \"SHOPPING_AND_BUYING\",\n  \"complexity_tier\": \"GROCERY_SHOPPING\",\n  \"estimated_item_budget\": 15000,\n  \"errand_location\": {\n    \"name\": \"Shoprite Ikeja City Mall\",\n    \"street_address\": \"Obafemi Awolowo Way\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.3582, 6.6173] },\n    \"landmark\": \"Opposite Secretariat\"\n  },\n  \"dropoff_location\": {\n    \"name\": \"Home Apartment\",\n    \"street_address\": \"14 Allen Avenue\",\n    \"city\": \"Lagos\",\n    \"state\": \"Lagos\",\n    \"coordinates\": { \"type\": \"Point\", \"coordinates\": [3.3521, 6.5985] },\n    \"contact_person\": \"John Doe\",\n    \"contact_phone\": \"+2348012345678\"\n  },\n  \"driver_tip\": 1000\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/errands/orders", "host": ["{{base_url}}"], "path": ["api", "v1", "errands", "orders"] }
+          }
+        },
+        {
+          "name": "Get My Errand Orders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/errands/orders", "host": ["{{base_url}}"], "path": ["api", "v1", "errands", "orders"] }
+          }
+        },
+        {
+          "name": "Pay Errand Order with Wallet",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{user_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/errands/orders/:orderId/pay", "host": ["{{base_url}}"], "path": ["api", "v1", "errands", "orders", ":orderId", "pay"], "variable": [{ "key": "orderId", "value": "ERRAND_ORDER_ID" }] }
+          }
+        },
+        {
+          "name": "Update Errand Order Status (Rider)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{rider_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_status\": \"PURCHASING_IN_PROGRESS\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/errands/orders/:orderId/status", "host": ["{{base_url}}"], "path": ["api", "v1", "errands", "orders", ":orderId", "status"], "variable": [{ "key": "orderId", "value": "ERRAND_ORDER_ID" }] }
+          }
+        },
+        {
+          "name": "Cancel Errand Order & Auto-Refund",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{user_token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Item no longer needed\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/errands/orders/:orderId/cancel", "host": ["{{base_url}}"], "path": ["api", "v1", "errands", "orders", ":orderId", "cancel"], "variable": [{ "key": "orderId", "value": "ERRAND_ORDER_ID" }] }
+          }
+        }
+      ]
     }
   ]
 }

@@ -13,6 +13,8 @@ const restaurantRoutes = require("./routes/restaurant.route");
 const orderRoutes = require("./routes/order.route");
 const riderRoutes = require("./routes/rider.route");
 const adminRoutes = require("./routes/admin.route");
+const laundryRoutes = require("./routes/laundry.route");
+const errandRoutes = require("./routes/errand.route");
 
 const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
@@ -38,6 +40,8 @@ app.use("/api/v1/restaurants", restaurantRoutes);
 app.use("/api/v1/orders", orderRoutes);
 app.use("/api/v1/riders", riderRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/laundry", laundryRoutes);
+app.use("/api/v1/errands", errandRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
